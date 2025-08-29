@@ -41,16 +41,41 @@ const Popup = () => {
   const [loadingBreaks, setLoadingBreaks] = useState(false);
 
   const downloadSchedule = useCallback(async () => {
-    const [activeTab] = await browser.tabs.query({
-      active: true,
-      currentWindow: true
+    console.log("🚀 Starting download schedule...");
+    console.log("📦 Raw breaks data:", breaks);
+    
+    // Convert dates to ISO strings for safe message passing
+    const serializedBreaks = breaks.map(breakItem => {
+      const serialized = {
+        ...breakItem,
+        date: breakItem.date ? breakItem.date.toISOString() : null
+      };
+      console.log("🔄 Serialized break:", serialized);
+      return serialized;
     });
+    
+    console.log("📨 Sending message with payload:", serializedBreaks);
 
-    if (activeTab.id)
-      await browser.tabs.sendMessage(activeTab.id, {
-        type: DOWNLOAD_SHED_MSG,
-        payload: breaks
+    try {
+      const [activeTab] = await browser.tabs.query({
+        active: true,
+        currentWindow: true
       });
+
+      if (activeTab.id) {
+        console.log("📮 Sending message to tab:", activeTab.id);
+        const response = await browser.tabs.sendMessage(activeTab.id, {
+          type: DOWNLOAD_SHED_MSG,
+          payload: serializedBreaks
+        });
+        console.log("✅ Message sent successfully, response:", response);
+      } else {
+        console.error("❌ No active tab ID found");
+      }
+    } catch (error) {
+      console.error("❌ Error in downloadSchedule:", error);
+      console.error("❌ Error details:", error.message, error.stack);
+    }
   }, [breaks]);
 
   const openSite = useCallback(() => {
@@ -118,31 +143,80 @@ const Popup = () => {
         }
 
         let parseDate = (dateStr) => {
+          console.log("🔍 PARSING DATE:", dateStr);
+          
           let dateParts = dateStr.match(/[a-z]{3,4} \d{1,2}/gi);
           let hyphenNum = dateStr.match(/- ?\d{1,2}/gi);
-          console.log(dateParts + " | " + hyphenNum);
+
+          console.log("📅 Date parts:", dateParts);
+          console.log("🔢 Hyphen numbers:", hyphenNum);
+          console.log("📆 Semester year:", semYear);
 
           let res = {
             date: null,
             length: 1
           };
 
-          res.date = new Date(dateParts[0] + ", " + semYear);
-          if (dateParts.length === 2) {
-            let date1 = new Date(dateParts[0] + ", " + semYear);
-            let date2 = new Date(dateParts[1] + ", " + semYear);
-            let difference = date2.getTime() - date1.getTime();
-            res.length = difference / (1000 * 3600 * 24) + 1;
-          } else if (hyphenNum && hyphenNum.length > 0) {
-            let date1 = new Date(dateParts[0] + ", " + semYear);
-            let num2 = parseInt(hyphenNum[0].replace("-", "").trim());
-            let month = dateParts[0].split(" ")[0];
-            let date2 = new Date(`${month} ${num2}, ${semYear}`);
-            let difference = date2.getTime() - date1.getTime();
-            res.length = difference / (1000 * 3600 * 24) + 1;
+          if (!dateParts || dateParts.length === 0) {
+            console.error("❌ No date parts found for:", dateStr);
+            return res;
           }
 
-          console.log(res);
+          try {
+            let dateString = dateParts[0] + ", " + semYear;
+            console.log("🗓️ Constructing date from:", dateString);
+            res.date = new Date(dateString);
+            
+            if (isNaN(res.date.getTime())) {
+              console.error("❌ Invalid date created:", dateString);
+              res.date = null;
+              return res;
+            }
+            
+            console.log("✅ Initial date created:", res.date);
+            
+            if (dateParts.length === 2) {
+              let dateString1 = dateParts[0] + ", " + semYear;
+              let dateString2 = dateParts[1] + ", " + semYear;
+              console.log("🗓️ Two dates - String 1:", dateString1, "String 2:", dateString2);
+              
+              let date1 = new Date(dateString1);
+              let date2 = new Date(dateString2);
+              
+              if (isNaN(date1.getTime()) || isNaN(date2.getTime())) {
+                console.error("❌ Invalid dates in range:", date1, date2);
+                return res;
+              }
+              
+              let difference = date2.getTime() - date1.getTime();
+              res.length = difference / (1000 * 3600 * 24) + 1;
+              console.log("📏 Length calculated:", res.length);
+            } else if (hyphenNum && hyphenNum.length > 0) {
+              let dateString1 = dateParts[0] + ", " + semYear;
+              let num2 = parseInt(hyphenNum[0].replace("-", "").trim());
+              let month = dateParts[0].split(" ")[0];
+              let dateString2 = `${month} ${num2}, ${semYear}`;
+              
+              console.log("🗓️ Hyphen range - String 1:", dateString1, "String 2:", dateString2);
+              
+              let date1 = new Date(dateString1);
+              let date2 = new Date(dateString2);
+              
+              if (isNaN(date1.getTime()) || isNaN(date2.getTime())) {
+                console.error("❌ Invalid dates in hyphen range:", date1, date2);
+                return res;
+              }
+              
+              let difference = date2.getTime() - date1.getTime();
+              res.length = difference / (1000 * 3600 * 24) + 1;
+              console.log("📏 Hyphen length calculated:", res.length);
+            }
+          } catch (error) {
+            console.error("❌ Error in parseDate:", error);
+            res.date = null;
+          }
+
+          console.log("📋 Final result:", res);
           return res;
         };
 
