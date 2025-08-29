@@ -19,6 +19,7 @@
     "plasmo": "0.89.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "sharp": "^0.34.3",
     "ts-ics": "^1.4.2",
     "uid": "^2.0.2",
     "webextension-polyfill": "^0.12.0"

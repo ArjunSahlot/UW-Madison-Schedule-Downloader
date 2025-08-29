@@ -103,7 +103,7 @@ const Popup = () => {
         const doc = parser.parseFromString(html, "text/html");
         let rows = doc.querySelector("table").querySelector("tbody").children;
 
-        let [semYear, semType] = detectedSemester.split(" ");
+        let [semType, semYear] = detectedSemester.split(" ");
         let semesterTitle = semType;
         semType = semType.toLowerCase();
 
@@ -118,7 +118,9 @@ const Popup = () => {
         }
 
         let parseDate = (dateStr) => {
-          let dateParts = dateStr.match(/[a-z]{3} \d{1,2}/gi);
+          let dateParts = dateStr.match(/[a-z]{3,4} \d{1,2}/gi);
+          let hyphenNum = dateStr.match(/- ?\d{1,2}/gi);
+          console.log(dateParts + " | " + hyphenNum);
 
           let res = {
             date: null,
@@ -131,8 +133,16 @@ const Popup = () => {
             let date2 = new Date(dateParts[1] + ", " + semYear);
             let difference = date2.getTime() - date1.getTime();
             res.length = difference / (1000 * 3600 * 24) + 1;
+          } else if (hyphenNum && hyphenNum.length > 0) {
+            let date1 = new Date(dateParts[0] + ", " + semYear);
+            let num2 = parseInt(hyphenNum[0].replace("-", "").trim());
+            let month = dateParts[0].split(" ")[0];
+            let date2 = new Date(`${month} ${num2}, ${semYear}`);
+            let difference = date2.getTime() - date1.getTime();
+            res.length = difference / (1000 * 3600 * 24) + 1;
           }
 
+          console.log(res);
           return res;
         };
 
