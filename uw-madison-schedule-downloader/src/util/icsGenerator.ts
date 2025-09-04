@@ -3,12 +3,6 @@ import { uid } from "uid";
 import type { ClassEvent, ExamEvent, FirstWeekEvent } from "./scheduleTypes";
 
 export class ICSGenerator {
-  private userTimeZone: string;
-
-  constructor() {
-    this.userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  }
-
   formatDateTime(date: Date): string {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -98,8 +92,8 @@ export class ICSGenerator {
         'BEGIN:VEVENT',
         `UID:${uid()}`,
         `DTSTAMP:${this.formatDateTime(new Date())}`,
-        `DTSTART;TZID=${this.userTimeZone}:${this.formatDateTime(event.actualStart)}`,
-        `DTEND;TZID=${this.userTimeZone}:${this.formatDateTime(event.actualEnd)}`,
+        `DTSTART;TZID=America/Chicago:${this.formatDateTime(event.actualStart)}`,
+        `DTEND;TZID=America/Chicago:${this.formatDateTime(event.actualEnd)}`,
         `SUMMARY:${event.summary}`,
         `DESCRIPTION:${event.description}`,
         `LOCATION:${event.location}`,
@@ -137,8 +131,8 @@ export class ICSGenerator {
         'BEGIN:VEVENT',
         `UID:${sampleEvent.uid}`,
         `DTSTAMP:${this.formatDateTime(new Date())}`,
-        `DTSTART;TZID=${this.userTimeZone}:${this.formatDateTime(startDateTime)}`,
-        `DTEND;TZID=${this.userTimeZone}:${this.formatDateTime(endDateTime)}`,
+        `DTSTART;TZID=America/Chicago:${this.formatDateTime(startDateTime)}`,
+        `DTEND;TZID=America/Chicago:${this.formatDateTime(endDateTime)}`,
         `SUMMARY:${sampleEvent.summary}`,
         `DESCRIPTION:${sampleEvent.description}`,
         `LOCATION:${sampleEvent.location}`,
@@ -165,7 +159,7 @@ export class ICSGenerator {
         
         const uniqueExceptions = [...new Set(exceptionDateTimes)].sort();
         if (uniqueExceptions.length > 0) {
-          icsLines.push(`EXDATE;TZID=${this.userTimeZone}:${uniqueExceptions.join(',')}`);
+          icsLines.push(`EXDATE;TZID=America/Chicago:${uniqueExceptions.join(',')}`);
         }
       }
 
@@ -178,8 +172,8 @@ export class ICSGenerator {
         'BEGIN:VEVENT',
         `UID:${exam.uid}`,
         `DTSTAMP:${this.formatDateTime(new Date())}`,
-        `DTSTART;TZID=${this.userTimeZone}:${this.formatDateTime(exam.start)}`,
-        `DTEND;TZID=${this.userTimeZone}:${this.formatDateTime(exam.end)}`,
+        `DTSTART;TZID=America/Chicago:${this.formatDateTime(exam.start)}`,
+        `DTEND;TZID=America/Chicago:${this.formatDateTime(exam.end)}`,
         `SUMMARY:${exam.summary}`,
         `DESCRIPTION:${exam.description}`,
         `LOCATION:${exam.location}`,
